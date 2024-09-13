@@ -1,0 +1,68 @@
+# Ignorar archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Ignorar archivos de configuración del IDE
+.idea/
+.vscode/
+
+# Ignorar archivos temporales
+*.log
+*.tmp
+*.swp
+
+# Ignorar archivos de compilación y dependencias
+node_modules/
+build/
+dist/
+
+# Ignorar archivos de configuración específicos de proyectos
+.env
+*.env
+
+# Ignorar archivos de documentación generados
+*.pdf
+*.docx
+
+# Ignorar archivos de cobertura
+coverage/
+
+# Ignorar archivos generados por paquetes
+*.gem
+*.jar
+*.pyc
+*.pyo
+*.class
+
+# Ignorar archivos de base de datos
+*.sqlite
+*.db
+
+# Ignorar directorios específicos
+logs/
+tmp/
+
+# Ignorar archivos de respaldo
+*.bak
+*.old
+
+# Ignorar archivos de dependencias de Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignorar archivos de dependencias de Java
+*.class
+
+# Ignorar archivos de dependencias de Ruby
+*.gem
+
+# Ignorar archivos de dependencias de JavaScript/TypeScript
+*.tsbuildinfo
+
+# Ignorar archivos generados por sistemas de pruebas
+test-results/
+*.log
+
+# Ignorar directorios generados por la compilación de C++
+build/
