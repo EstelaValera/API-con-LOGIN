@@ -7,35 +7,33 @@ const axios = require('axios');
 
 const router = express.Router();
 
+
 router.get('/', (req, res) => {
-    // const token = req.session.token;
-  
-    // Si ya hay un token
-    // if (token) {
-    //   const decoded = jwt.verify(token, secret);
-  
-    //   return res.send(`
-    //       <h1>Bienvenido, ${decoded.name}</h1>
-    //       <a href="/dashboard">Ir al Dashboard</a><br><br>
-    //       <form action="/logout" method="post">
-    //           <button type="submit">Cerrar Sesión</button>
-    //       </form>
-    //   `)
-    // }
-  
-    //Si no hay token    
-    const loginForm = `
-      <h1>Iniciar Sesión</h1>
+  if (!req.session.token) {
+      const loginForm = `
       <form action="/login" method="post">
-          <label for="username">Usuario</label>
-          <input type="text" id="username" name="username" required><br><br>
-          <label for="password">Contraseña</label>
-          <input type="password" id="password" name="password" required><br><br>
+          <label for="username">Usuario:</label>
+          <input type="text" id="username" name="username" required><br>
+          
+          <label for="password">Contraseña:</label>
+          <input type="password" id="password" name="password" required><br>
+      
           <button type="submit">Iniciar sesión</button>
       </form>
-    `;
-    res.send(loginForm);
-  });
+      <a href="/search">Búsqueda</a>
+      `;
+      res.send(loginForm);
+  } else {
+      res.send(`
+          <h1> Bienvenido </h1>
+          <a href="/search">Búsqueda</a>
+          <form action="/logout" method="post"> 
+              <button type="submit">Cerrar sesión</button> 
+          </form>
+      `);
+  }
+});
+
 
   router.post('/login', (req, res) => {
     const { username, password } = req.body;
@@ -52,64 +50,78 @@ router.get('/', (req, res) => {
     res.redirect('/search');
   });
 
-  
+
   router.get('/search', verifyToken, (req, res) => {
     const userId = req.user;
-    const user = users.find((user) => user.id === userId);
-  
-    if (!user) {
-        res.status(401).json({ mensaje: 'Usuario no encontrado' });
+    const user = users.find((u) => u.id === userId);
     
+    if (!user) {
+        res.status(401).json({ message: 'Usuario no encontrado' });
     } else {
-    res.send(`
-            <h1>Buscar Personaje</h1>
-            <form action="/characters" method="get">
-                <input type="text" id="characterName" name="name" placeholder="Nombre de personaje" required/>
-                <button type="submit">Buscar</button>
+        res.send(`
+            <h1>Bienvenido, ${user.name}!</h1> 
+            <form action="/characters/search" method="post">
+                <input type="text" id="characterName" name="name" placeholder="Rick" required />
+                <button type="submit">Obtener info</button>
             </form>
-            <form action="/logout" method="post">
-                <button class="logout-btn" type="submit">Cerrar sesión</button>
-            </form>
-            `)
+            <div id="characterInfo"></div>
+            <form action="/logout" method="post"> 
+                <button type="submit">Cerrar sesión</button> 
+            </form> 
+            <a href="/">Inicio</a>
+        `);
     }
-  });
-  
-  
+});
 
-  router.get('/characters/:name', async (req, res) => {
-    const characterName = req.params.name;
-    console.log(characterName);
-  
-    try {
-      
-      const response = await axios.get(`https://rickandmortyapi.com/api/character/?name=${characterName}`);
-      const data = response.data.results;
-  
-      if (!data || data.length === 0) {
-        return res.status(404).json({ mensaje: 'Personaje no encontrado' });
+
+router.get("/characters", verifyToken, async (req, res) => {
+  try {
+      const url = "https://rickandmortyapi.com/api/character";
+      const response = await axios.get(url);
+      let data = [];
+      const totalPages = response.data.info.pages;
+      for (let i = 1; i <= totalPages; i++) {
+          const responsePage = await axios.get(`${url}?page=${i}`);
+          data.push(...responsePage.data.results);
       }
-  
-     
-      const character = data[0];
-  
-      
-      const { name, status, species, gender, image, origin } = character;
-  
-      
-      res.send(`
-        <h1>${name}</h1>
-        <p><strong>Estado:</strong> ${status}</p>
-        <p><strong>Especie:</strong> ${species}</p>
-        <p><strong>Género:</strong> ${gender}</p>
-        <p><strong>Origen:</strong> ${origin.name}</p>
-        <img src="${image}" alt="Imagen de ${name}" />
-      `);
-      
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ mensaje: "Error al buscar el personaje" });
-    }
-  });
-  
+      res.json(data);
+  } catch (err) { 
+      res.status(500).json({ error: `Personaje no encontrado, ${err}` });
+  }
+});
 
-  module.exports = router
+
+router.post("/characters/search", verifyToken, (req, res) => {
+  const name = req.body.name;
+  res.redirect(`/characters/${name}`);
+});
+
+
+router.get("/characters/:name", verifyToken, async (req, res) => {
+  const name = req.params.name;
+  const url = "https://rickandmortyapi.com/api/character";
+  try {
+      const response = await axios.get(`${url}?name=${name}`);
+      let data = [];
+      const totalPages = response.data.info.pages;
+      for (let i = 1; i <= totalPages; i++) {
+          const responsePage = await axios.get(`${url}?name=${name}&page=${i}`);
+          data.push(...responsePage.data.results);
+      }
+      const characterList = data.map(character => {
+          const { name, status, gender, species, image, origin: { name: origin } } = character;
+          return { name, status, gender, species, image, origin };
+      });
+      res.json(characterList);
+  } catch (err) { 
+      res.status(500).json({ error: `Personaje no encontrado, ${err}` });
+  }
+});
+
+
+router.post('/logout', (req, res) => {
+  req.session.destroy();
+  res.redirect('/');
+});
+
+module.exports = router;

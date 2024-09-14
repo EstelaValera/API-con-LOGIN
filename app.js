@@ -11,7 +11,7 @@ app.use(express.json());
 
 app.use(
     session({
-      secret: hashedSecret, //secret: process.env.SESSION_SECRET || 'mi_secreto_super_seguro'
+      secret: hashedSecret,
       resave: false,
       saveUninitialized: true,
       cookie: { secure: false }, 
